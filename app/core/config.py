@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "Backend Boilerplate"
     limit: int = 100
+    database_url: str
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -12,6 +13,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # cria uma instância da classe Settings, que carrega as configurações do arquivo .env e permite o acesso a elas em outras partes do aplicativo.
-print(
-    settings.app_name
-)  # imprime o valor da variável app_name, que é "Backend Boilerplate".
