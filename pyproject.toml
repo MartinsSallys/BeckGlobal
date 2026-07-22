@@ -6,7 +6,7 @@ authors = [
     {name = "MartinsSallys",email = "sallysmartins869@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13.14"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "fastapi (>=0.139.0,<0.140.0)",
     "uvicorn (>=0.51.0,<0.52.0)",
@@ -14,9 +14,15 @@ dependencies = [
     "alembic (>=1.18.5,<2.0.0)",
     "psycopg[binary] (>=3.3.4,<4.0.0)",
     "pydantic-settings (>=2.14.2,<3.0.0)",
-    "python-dotenv (>=1.2.2,<2.0.0)"
+    "pydantic[email] (>=2.0.0,<3.0.0)",
+    "python-dotenv (>=1.2.2,<2.0.0)",
+    "bcrypt (>=4.0.0,<5.0.0)",
+    "pyjwt (>=2.10.0,<3.0.0)"
 ]
 
+
+[tool.poetry]
+packages = [{include = "app"}]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -29,5 +35,30 @@ dev = [
     "httpx (>=0.28.1,<0.29.0)",
     "ruff (>=0.15.21,<0.16.0)",
     "mypy (>=2.2.0,<3.0.0)",
-    "pre-commit (>=4.6.0,<5.0.0)"
+    "pre-commit (>=4.6.0,<5.0.0)",
+    "taskipy (>=1.14.0,<2.0.0)",
+    "coverage (>=7.0.0,<8.0.0)"
 ]
+
+
+[tool.ruff.lint]
+preview = true
+select = ["I", "E", "F", "W", "PL","PT"]
+ignore = ["A", "COM812", "DOC", "E501"]
+
+
+[tool.ruff.format]
+preview = true
+quote-style = 'single'
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+addopts = '-p no:warnings'
+
+[tool.taskipy.tasks]
+pre_lint = 'typos'
+lint = 'ruff check'
+pre_format = 'ruff check --fix'
+format = 'ruff format'
+run = 'poetry run uvicorn app.main:app --reload'
+test = 'pytest -s -x --cov=app -vv'
