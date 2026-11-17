@@ -1,51 +1,81 @@
-# BeckGlobal 🚀
+# BeckGlobal
 
-Boilerplate para APIs modernas com FastAPI, PostgreSQL e Docker. Pronto para servir de base para novos projetos, com autenticação JWT, migrations e testes automatizados.
+Boilerplate de API em Python com FastAPI, PostgreSQL, autenticação JWT, migrations e testes automatizados. Pronto para ser usado como base de novos projetos por qualquer dev.
+
+> Documentação de handoff mais detalhada: [`docs/PROJETO.md`](docs/PROJETO.md).
 
 ---
 
-## ✨ Tecnologias
+## Sumário
+
+- [O que vem pronto](#o-que-vem-pronto)
+- [Stack](#stack)
+- [Requisitos](#requisitos)
+- [Início rápido com Docker](#início-rápido-com-docker)
+- [Rodando localmente](#rodando-localmente)
+- [Configuração](#configuração)
+- [Endpoints](#endpoints)
+- [Autenticação](#autenticação)
+- [Banco de dados e migrations](#banco-de-dados-e-migrations)
+- [Testes](#testes)
+- [Qualidade de código](#qualidade-de-código)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Arquitetura](#arquitetura)
+- [Docker](#docker)
+- [Usando como template](#usando-como-template)
+- [Checklist de produção](#checklist-de-produção)
+- [Roadmap](#roadmap)
+- [Contribuindo](#contribuindo)
+- [Licença](#licença)
+
+---
+
+## O que vem pronto
+
+- [x] Aplicação FastAPI com CORS, logging e tratamento global de exceções
+- [x] Configuração via variáveis de ambiente (`.env`) com Pydantic Settings
+- [x] SQLAlchemy 2.0 + PostgreSQL
+- [x] Alembic configurado com migration inicial real
+- [x] Autenticação JWT (`POST /auth/token`) e rotas protegidas
+- [x] Hash de senha com bcrypt
+- [x] CRUD de usuários com validações e regras de permissão
+- [x] Health check com status do banco (200/503)
+- [x] Suite de testes com SQLite in-memory e cobertura mínima de 80%
+- [x] Docker + Docker Compose com healthcheck e migrations automáticas
+- [x] Dockerfile non-root com apenas dependências de produção
+- [x] Ruff, MyPy, Pre-commit, Taskipy e Makefile
+- [x] README e documentação de handoff
+
+---
+
+## Stack
+
+| Camada | Tecnologia |
+|---|---|
+| Runtime | Python 3.12+ |
+| Framework | FastAPI |
+| ORM | SQLAlchemy 2.0 |
+| Banco | PostgreSQL 16 (psycopg 3) |
+| Migrations | Alembic |
+| Dependências | Poetry |
+| Auth | PyJWT + bcrypt |
+| Validação/config | Pydantic v2 + pydantic-settings |
+| Testes | Pytest + pytest-cov |
+| Qualidade | Ruff, MyPy, Pre-commit |
+| Infra | Docker, Docker Compose |
+
+---
+
+## Requisitos
 
 - Python 3.12+
-- FastAPI
-- SQLAlchemy 2.0
-- PostgreSQL 16
-- Alembic (migrations)
-- Poetry (gerenciamento de dependências)
-- Docker & Docker Compose
-- JWT Authentication (PyJWT + bcrypt)
-- Pydantic Settings
-- Pytest + Coverage
-- Ruff (lint + format)
-- MyPy (type check)
-- Pre-commit
-- Taskipy
+- [Poetry](https://python-poetry.org/)
+- PostgreSQL 16 (ou Docker)
+- Docker + Docker Compose (opcional, mas recomendado)
 
 ---
 
-## 📂 Estrutura
-
-```text
-app/
-├── api/
-│   ├── routes/        # health, auth e users
-│   ├── dependencies.py # dependências (usuário autenticado)
-│   ├── router.py      # registro dos routers
-│   └── schemas.py     # schemas Pydantic
-├── core/              # configuração, logging, exceções e segurança
-├── database/          # engine, sessão e Base do SQLAlchemy
-├── models/            # modelos SQLAlchemy
-└── main.py            # entrypoint da aplicação
-
-alembic/               # migrations
-tests/                 # testes automatizados (SQLite in-memory)
-```
-
----
-
-## ⚡ Início rápido (com Docker)
-
-Requer apenas Docker e Docker Compose instalados.
+## Início rápido com Docker
 
 ```bash
 git clone https://github.com/MartinsSallys/BeckGlobal.git
@@ -54,96 +84,38 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Pronto. A API estará em `http://localhost:8000`. As migrations são aplicadas
-automaticamente na subida do container.
+Serviços disponíveis após a subida:
 
----
+| Serviço | URL |
+|---|---|
+| API | http://localhost:8000 |
+| Swagger UI | http://localhost:8000/docs |
+| ReDoc | http://localhost:8000/redoc |
+| Health check | http://localhost:8000/health |
 
-## 🐳 Deploy com Docker em qualquer servidor
+As migrations são aplicadas automaticamente antes do servidor iniciar.
 
-### Pré-requisitos
-
-- **Docker** (24+)
-- **Docker Compose** (v2+)
-- **Git** (ou copie os arquivos manualmente)
-
-### Passo a passo
-
-#### 1. Leve o projeto para o servidor
+Acompanhe os logs:
 
 ```bash
-# Opção A: clonando
-git clone https://github.com/MartinsSallys/BeckGlobal.git
-cd BeckGlobal
-
-# Opção B: copiando os arquivos (zip, rsync, scp, etc.)
-scp -r BeckGlobal/ user@servidor:/caminho/deploy/
-ssh user@servidor
-cd /caminho/deploy/BeckGlobal
-```
-
-#### 2. Configure o `.env`
-
-```bash
-cp .env.example .env
-```
-
-Edite o `.env` com valores reais para produção:
-
-```bash
-# ⚠️ OBRIGATÓRIO mudar em produção:
-SECRET_KEY=uma-chave-longa-e-aleatoria  # gere com: openssl rand -hex 32
-```
-
-Dentro do Docker Compose, o `DATABASE_URL` é **sobrescrito automaticamente**
-para apontar para o host `db` (veja `docker-compose.yml`). O valor no `.env`
-serve para execução local (sem Docker).
-
-#### 3. Suba os containers
-
-```bash
-docker compose up -d --build
-```
-
-Isso sobe 2 containers:
-- **app**: API FastAPI na porta 8000 (roda `alembic upgrade head` antes de iniciar)
-- **db**: PostgreSQL 16 na porta 5432 com volume persistente
-
-#### 4. Verifique se tudo subiu
-
-```bash
-docker compose ps
 docker compose logs -f app
-curl http://localhost:8000/health
 ```
 
-### Atualizando o deploy
+Para parar:
 
 ```bash
-git pull
-docker compose up -d --build
-```
-
-### Parando tudo
-
-```bash
-docker compose down          # mantém o volume do banco
-docker compose down -v       # remove TUDO, inclusive os dados
+docker compose down      # mantém os dados do banco
+docker compose down -v   # remove tudo, inclusive os dados
 ```
 
 ---
 
-## 🛠 Deploy sem Docker (modo tradicional)
+## Rodando localmente
 
-### Pré-requisitos
-
-- Python 3.12+
-- Poetry
-- PostgreSQL 16 instalado e rodando
-
-### Banco de dados
+Sem Docker, com PostgreSQL instalado na máquina:
 
 ```bash
+# 1) criar usuário e banco
 sudo -u postgres psql
 ```
 
@@ -153,88 +125,116 @@ CREATE DATABASE beckglobal OWNER usuario;
 \q
 ```
 
-### Instalação e execução
-
 ```bash
-git clone https://github.com/MartinsSallys/BeckGlobal.git
-cd BeckGlobal
+# 2) instalar dependências
 cp .env.example .env
-
-# Edite o .env com os dados do seu PostgreSQL local:
-# DATABASE_URL=postgresql+psycopg://usuario:senha@localhost:5432/beckglobal
-
 poetry install
+
+# 3) aplicar migrations
 poetry run alembic upgrade head
+
+# 4) subir a API
 poetry run uvicorn app.main:app --reload
 ```
 
-API em `http://localhost:8000`.
+Ajuste o `DATABASE_URL` no `.env` conforme o seu PostgreSQL local.
 
 ---
 
-## 🔐 Autenticação
+## Configuração
 
-O fluxo é baseado em JWT (Bearer token):
+Todas as configurações vêm de variáveis de ambiente (arquivo `.env`):
 
-1. `POST /users/` — cria um usuário (público).
-2. `POST /auth/token` — login via `application/x-www-form-urlencoded`
-   (`username` = e-mail, `password` = senha). Retorna `access_token`.
-3. Rotas de `GET/PUT/DELETE /users` exigem `Authorization: Bearer <token>`.
+| Variável | Descrição | Padrão |
+|---|---|---|
+| `APP_NAME` | Nome exibido na documentação | `Backend Boilerplate` |
+| `DEBUG` | Ativa logs de debug | `False` |
+| `DATABASE_URL` | URL de conexão do banco | `postgresql+psycopg://usuario:senha@localhost:5432/beckglobal` |
+| `SECRET_KEY` | Chave de assinatura do JWT | vazio — **troque em produção** |
+| `ALGORITHM` | Algoritmo do JWT | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Tempo de expiração do token | `30` |
+| `CORS_ORIGINS` | Origens permitidas (JSON) | `["*"]` |
 
-Exemplo:
+Gere uma chave segura com:
 
 ```bash
+openssl rand -hex 32
+```
+
+> No Docker Compose, o `DATABASE_URL` é sobrescrito para apontar ao host `db`.
+
+---
+
+## Endpoints
+
+| Método | Rota | Autenticação | Descrição |
+|---|---|---|---|
+| `GET` | `/health` | Não | Status da aplicação e do banco |
+| `POST` | `/users/` | Não | Registro de usuário |
+| `POST` | `/auth/token` | Não | Login (retorna access token) |
+| `GET` | `/users/` | Bearer | Lista usuários (`skip`, `limit`) |
+| `GET` | `/users/{id}` | Bearer | Busca usuário por ID |
+| `PUT` | `/users/{id}` | Bearer | Atualiza a própria conta |
+| `DELETE` | `/users/{id}` | Bearer | Remove a própria conta |
+
+---
+
+## Autenticação
+
+O fluxo usa JWT no header `Authorization: Bearer <token>`.
+
+```bash
+# 1) registrar
 curl -X POST http://localhost:8000/users/ \
   -H 'Content-Type: application/json' \
   -d '{"name":"Alice","email":"alice@example.com","password":"secret123"}'
 
+# 2) login
 curl -X POST http://localhost:8000/auth/token \
   -d 'username=alice@example.com&password=secret123'
+
+# 3) acessar rota protegida
+curl http://localhost:8000/users/ \
+  -H 'Authorization: Bearer <ACCESS_TOKEN>'
 ```
 
-No Swagger (`/docs`), use o botão **Authorize** com o token retornado.
+No Swagger (`/docs`), clique em **Authorize** e informe o token.
 
 Regras atuais:
-- `PUT` e `DELETE` só permitem alterar/remover a própria conta.
+
 - Senha com mínimo de 8 caracteres.
 - E-mails são normalizados para minúsculas.
+- E-mail duplicado retorna `409 Conflict`.
+- `PUT` e `DELETE` só afetam a própria conta (`403` caso contrário).
+- Usuário inativo não autentica (`403`) e token inválido retorna `401`.
+- Senhas são armazenadas com hash bcrypt.
 
 ---
 
-## 🗄 Banco de dados e Migrations
-
-### Criar nova migration
+## Banco de dados e migrations
 
 ```bash
-poetry run alembic revision --autogenerate -m "descricao da mudanca"
-```
-
-### Aplicar migrations
-
-```bash
+# aplicar todas as migrations
 poetry run alembic upgrade head
-```
 
-### Reverter última migration
+# criar uma migration a partir dos models
+poetry run alembic revision --autogenerate -m "descricao da mudanca"
 
-```bash
+# reverter a última migration
 poetry run alembic downgrade -1
-```
 
-### Ver histórico
-
-```bash
+# histórico
 poetry run alembic history
 ```
 
-> Novos modelos precisam ser importados em `app/models/__init__.py` para que o
-> Alembic os detecte no autogenerate.
+> Novos models devem ser exportados em `app/models/__init__.py` para serem
+> detectados pelo `autogenerate`.
 
 ---
 
-## 🧪 Testes
+## Testes
 
-Os testes usam SQLite in-memory, então não precisam de um PostgreSQL rodando.
+Os testes usam SQLite in-memory, portanto não exigem PostgreSQL rodando.
 
 ```bash
 task test
@@ -246,19 +246,19 @@ Equivalente a:
 poetry run pytest -s -x --cov=app -vv
 ```
 
-A cobertura mínima configurada é de 80%.
+Cobertura atual: 18 testes e ~89% de cobertura (mínimo configurado: 80%).
 
 ---
 
-## 🎨 Qualidade de Código
+## Qualidade de código
 
 ```bash
-task format     # formata o código (ruff)
-task lint       # verifica formato e estilo (ruff)
-task typecheck  # verifica tipos (mypy)
+task lint       # ruff format --check + ruff check
+task format     # ruff format
+task typecheck  # mypy
 ```
 
-Ou via Makefile:
+Atalhos também disponíveis no Makefile:
 
 ```bash
 make lint
@@ -267,57 +267,108 @@ make typecheck
 make test
 ```
 
+Pre-commit configurado com Ruff, trailing whitespace, end-of-file, check-yaml e
+check-merge-conflict.
+
 ---
 
-## 📖 Documentação da API
+## Estrutura do projeto
 
 ```text
-Swagger:  http://localhost:8000/docs
-ReDoc:    http://localhost:8000/redoc
-Health:   http://localhost:8000/health
+.
+├── app/
+│   ├── api/
+│   │   ├── routes/
+│   │   │   ├── auth.py       # login / JWT
+│   │   │   ├── health.py     # health check
+│   │   │   └── users.py      # CRUD de usuários
+│   │   ├── dependencies.py   # usuário autenticado
+│   │   ├── router.py         # registro dos routers
+│   │   └── schemas.py        # schemas Pydantic
+│   ├── core/
+│   │   ├── config.py         # settings / .env
+│   │   ├── exception.py      # exceções e handler global
+│   │   ├── logging_config.py # logging
+│   │   └── security.py       # bcrypt + JWT
+│   ├── database/
+│   │   ├── base.py           # DeclarativeBase
+│   │   ├── connection.py     # engine e SessionLocal
+│   │   └── session.py        # dependência get_db
+│   ├── models/
+│   │   └── user.py           # model User
+│   └── main.py               # instância FastAPI
+├── alembic/                  # migrations
+├── tests/                    # testes (SQLite in-memory)
+├── docs/PROJETO.md           # documentação de handoff
+├── alembic.ini
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+├── pyproject.toml
+├── .env.example
+└── README.md
 ```
-
-`GET /health` retorna `200` quando o banco está acessível e `503` quando não
-está (útil para readiness/liveness probes).
 
 ---
 
-## 📌 Arquitetura
+## Arquitetura
 
 Estrutura enxuta em camadas:
 
-```
-Request → Router (app/api) → Session/Model (app/database + app/models) → Response
+```text
+Request -> Router (app/api) -> Session/Model (app/database + app/models) -> Response
 ```
 
-- **API**: recebe e valida requisições HTTP (schemas + routers).
+- **API**: recebe e valida requisições (schemas + routers).
 - **Core**: configuração, logging, exceções e segurança.
 - **Database**: engine, sessão e `Base` do SQLAlchemy.
-- **Models**: modelos de persistência (PostgreSQL via SQLAlchemy).
+- **Models**: persistência no PostgreSQL via SQLAlchemy.
+
+A arquitetura evita camadas extras de service/repository de propósito, mantendo o
+boilerplate simples de entender e evoluir.
 
 ---
 
-## ✅ Recursos
+## Docker
 
-- Autenticação JWT com rotas protegidas
-- Registro e CRUD de usuários
-- Senhas com hash bcrypt
-- Configuração via `.env`
-- Logging centralizado
-- Tratamento global de exceções
-- SQLAlchemy 2.0 + PostgreSQL
-- Alembic para migrations
-- Docker & Docker Compose com healthcheck e execução de migrations
-- Testes automatizados com cobertura (SQLite in-memory)
-- Lint, formatação e type checking
-- Pre-commit hooks
+- **Dockerfile**: instala apenas dependências de produção (`--only main`), roda
+  como usuário não-root, expõe a porta 8000 e possui `HEALTHCHECK`.
+- **docker-compose.yml**: serviços `app` e `db` (PostgreSQL 16 com volume
+  persistente), healthcheck do banco, `depends_on` com `condition:
+  service_healthy`, `restart: unless-stopped` e migrations automáticas no start.
+- **.dockerignore**: mantém `.env`, `.git`, banco local, caches e testes fora da
+  imagem.
 
 ---
 
-## 📌 Roadmap
+## Usando como template
+
+1. Crie um repositório novo e copie os arquivos (ou use "Use this template" no GitHub).
+2. Renomeie o projeto em `pyproject.toml` (`name`) e ajuste `APP_NAME`.
+3. Troque `SECRET_KEY`, `DATABASE_URL` e as credenciais do Postgres.
+4. Ajuste CORS para os domínios reais.
+5. Adicione seus models em `app/models/` e exporte em `app/models/__init__.py`.
+6. Gere a migration: `poetry run alembic revision --autogenerate -m "..."`.
+7. Rode `task test` e `task lint` antes de abrir o PR.
+
+---
+
+## Checklist de produção
+
+- [ ] Trocar `SECRET_KEY` por uma chave aleatória forte
+- [ ] Definir `DEBUG=False`
+- [ ] Restringir `CORS_ORIGINS` aos domínios reais
+- [ ] Trocar as credenciais do PostgreSQL
+- [ ] Configurar HTTPS/reverse proxy (nginx, traefik, etc.)
+- [ ] Configurar backup do volume `pgdata`
+- [ ] Adicionar CI/CD (GitHub Actions)
+
+---
+
+## Roadmap
 
 - [ ] Refresh Token
-- [ ] Papéis/permissões (RBAC)
+- [ ] Papéis e permissões (RBAC)
 - [ ] Redis / Cache
 - [ ] Celery
 - [ ] Rate Limit
@@ -327,16 +378,24 @@ Request → Router (app/api) → Session/Model (app/database + app/models) → R
 
 ---
 
-## 🤝 Contribuindo
+## Contribuindo
 
-1. Fork
-2. Crie sua branch: `git checkout -b minha-feature`
+1. Faça um fork
+2. Crie uma branch: `git checkout -b minha-feature`
 3. Commit: `git commit -m 'feat: minha feature'`
 4. Push: `git push origin minha-feature`
 5. Abra um Pull Request
 
+Antes de contribuir, rode:
+
+```bash
+task lint
+task typecheck
+task test
+```
+
 ---
 
-## 📄 Licença
+## Licença
 
 MIT
