@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -8,11 +8,11 @@ router = APIRouter()
 
 
 @router.get('/health')
-async def health(db: Session = Depends(get_db)):
+def health(response: Response, db: Session = Depends(get_db)) -> dict[str, str]:
     try:
         db.execute(text('SELECT 1'))
-        db_status = 'ok'
     except Exception:
-        db_status = 'unavailable'
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {'status': 'error', 'database': 'unavailable'}
 
-    return {'status': 'ok', 'database': db_status}
+    return {'status': 'ok', 'database': 'ok'}

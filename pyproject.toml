@@ -17,7 +17,8 @@ dependencies = [
     "pydantic[email] (>=2.0.0,<3.0.0)",
     "python-dotenv (>=1.2.2,<2.0.0)",
     "bcrypt (>=4.0.0,<5.0.0)",
-    "pyjwt (>=2.10.0,<3.0.0)"
+    "pyjwt (>=2.10.0,<3.0.0)",
+    "python-multipart (>=0.0.20,<1.0.0)"
 ]
 
 
@@ -37,14 +38,15 @@ dev = [
     "mypy (>=2.2.0,<3.0.0)",
     "pre-commit (>=4.6.0,<5.0.0)",
     "taskipy (>=1.14.0,<2.0.0)",
-    "coverage (>=7.0.0,<8.0.0)"
+    "coverage (>=7.0.0,<8.0.0)",
+    "pytest-cov (>=5.0.0,<8.0.0)"
 ]
 
 
 [tool.ruff.lint]
 preview = true
-select = ["I", "E", "F", "W", "PL","PT"]
-ignore = ["A", "COM812", "DOC", "E501"]
+select = ["I", "E", "F", "W", "PL", "PT"]
+ignore = ["A", "COM812", "DOC", "E501", "PLR2004"]
 
 
 [tool.ruff.format]
@@ -54,11 +56,33 @@ quote-style = 'single'
 [tool.pytest.ini_options]
 pythonpath = ["."]
 addopts = '-p no:warnings'
+asyncio_mode = 'auto'
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 80
+
+[tool.mypy]
+python_version = '3.12'
+plugins = ["pydantic.mypy"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+check_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true
+exclude = ['^alembic/']
 
 [tool.taskipy.tasks]
-pre_lint = 'typos'
+pre_lint = 'ruff format --check'
 lint = 'ruff check'
 pre_format = 'ruff check --fix'
 format = 'ruff format'
+typecheck = 'mypy .'
 run = 'poetry run uvicorn app.main:app --reload'
 test = 'pytest -s -x --cov=app -vv'
